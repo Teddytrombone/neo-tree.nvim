@@ -153,6 +153,12 @@ M.close_node = function(state, callback)
     target_node:collapse()
     renderer.redraw(state)
     renderer.focus_node(state, target_node:get_id())
+    if
+      state.explicitly_opened_directories
+      and state.explicitly_opened_directories[target_node:get_id()]
+    then
+      state.explicitly_opened_directories[target_node:get_id()] = false
+    end
   end
 end
 
@@ -171,9 +177,16 @@ M.close_all_subnodes = function(state)
   renderer.collapse_all_nodes(tree, target_node:get_id())
   renderer.redraw(state)
   renderer.focus_node(state, target_node:get_id())
+  if
+    state.explicitly_opened_directories
+    and state.explicitly_opened_directories[target_node:get_id()]
+  then
+    state.explicitly_opened_directories[target_node:get_id()] = false
+  end
 end
 
 M.close_all_nodes = function(state)
+  state.explicitly_opened_directories = {}
   renderer.collapse_all_nodes(state.tree)
   renderer.redraw(state)
 end
@@ -700,7 +713,8 @@ local open_with_cmd = function(state, open_cmd, toggle_directory, open_file)
     if toggle_directory and node.type == "directory" then
       toggle_directory(node)
     elseif node:has_children() then
-      if node:is_expanded() and node.type ~= "directory" then
+      local no_expand_file = (state.config or {}).no_expand_file
+      if node.type ~= "directory" and (no_expand_file or node:is_expanded()) then
         return open()
       end
 
